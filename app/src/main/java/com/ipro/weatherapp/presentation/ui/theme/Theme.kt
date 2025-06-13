@@ -1,4 +1,4 @@
-package com.ipro.weatherapp.ui.theme
+package com.ipro.weatherapp.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build
