@@ -42,8 +42,11 @@ class WeatherMapper {
         )
 
         val hourlyData = hourlyTemperature.zip(hourlyTime) { temp, times ->
-            HourlyTemperature(temp, getHourFromTimeString(times))
-        }
+            HourlyTemperature(
+                temperature = temp.roundToInt(),
+                hour = getHourFromTimeString(times)
+            )
+        }.drop(1).take(24)
 
         val dailyForecasts = time.indices.map { i ->
             DailyForecast(
