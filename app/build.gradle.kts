@@ -80,4 +80,15 @@ dependencies {
 
     // Lifecycle ViewModel
     implementation(libs.lifecycle.viewmodel)
+
+    //Ktor Core and Android/OkHttp ---
+    implementation(libs.ktor.client.okhttp) // or CIO if preferred
+
+    //Serialization & JSON ---
+    implementation(libs.ktor.client.content.negotiation)
+
+    // testing
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+
 }

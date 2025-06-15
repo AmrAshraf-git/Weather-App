@@ -6,8 +6,7 @@ import com.ipro.weatherapp.domain.repository.LocationRepo
 class GetCurrentLocationUseCase(
     private val locationRepo: LocationRepo
 ) {
-    suspend operator fun invoke(): Result<LocationCoordinate> {
-        return runCatching { locationRepo.getCurrentLocation() }
+    suspend operator fun invoke(): LocationCoordinate {
+        return locationRepo.getCurrentLocation()
     }
-
 }

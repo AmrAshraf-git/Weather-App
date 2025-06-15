@@ -7,7 +7,7 @@ import com.ipro.weatherapp.domain.repository.WeatherRepo
 class GetWeatherByLocationUseCase(
     private val weatherRepo: WeatherRepo
 ) {
-    suspend operator fun invoke(location: LocationCoordinate): Result<Weather> {
-        return runCatching { weatherRepo.getDailyWeatherByCoordinate(location) }
+    suspend operator fun invoke(location: LocationCoordinate): Weather {
+        return  weatherRepo.getDailyWeatherByCoordinate(location)
     }
 }

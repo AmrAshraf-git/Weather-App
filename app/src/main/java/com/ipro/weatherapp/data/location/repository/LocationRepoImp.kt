@@ -2,13 +2,20 @@ package com.ipro.weatherapp.data.location.repository
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
+import android.os.Build
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
 import com.ipro.weatherapp.domain.exception.LocationUnavailableException
 import com.ipro.weatherapp.domain.model.LocationCoordinate
 import com.ipro.weatherapp.domain.repository.LocationRepo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
+import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -45,4 +52,37 @@ class LocationRepoImp(
             cont.resumeWithException(e)
         }
     }
+
+
+    override suspend fun getCityNameFromLocation(location: LocationCoordinate): String =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            suspendCancellableCoroutine { cont ->
+                val geocoder = Geocoder(context, Locale.getDefault())
+                geocoder.getFromLocation(
+                    location.latitude,
+                    location.longitude,
+                    1,
+                    object : Geocoder.GeocodeListener {
+                        override fun onGeocode(addresses: MutableList<Address>) {
+                            val city = addresses.firstOrNull()?.locality ?: "Unknown"
+                            cont.resume(city)
+                        }
+
+                        override fun onError(errorMessage: String?) {
+                            cont.resume("Unknown")
+                        }
+                    }
+                )
+            }
+        } else {
+            withContext(Dispatchers.IO) {
+                try {
+                    val geocoder = Geocoder(context, Locale.getDefault())
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    addresses?.firstOrNull()?.locality ?: "Unknown"
+                } catch (e: IOException) {
+                    "Unknown"
+                }
+            }
+        }
 }

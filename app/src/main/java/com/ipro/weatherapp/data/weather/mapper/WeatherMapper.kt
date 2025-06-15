@@ -3,8 +3,8 @@ package com.ipro.weatherapp.data.weather.mapper
 import data.weather.model.WeatherDto
 import com.ipro.weatherapp.domain.exception.NoWeatherFoundException
 import com.ipro.weatherapp.domain.model.CurrentWeatherData
-import com.ipro.weatherapp.domain.model.DailyForecast
-import com.ipro.weatherapp.domain.model.HourlyTemperature
+import com.ipro.weatherapp.domain.model.DailyWeatherData
+import com.ipro.weatherapp.domain.model.HourlyTemperatureData
 import com.ipro.weatherapp.domain.model.Weather
 import com.ipro.weatherapp.domain.model.WeatherCondition
 import java.time.LocalDate
@@ -16,10 +16,10 @@ class WeatherMapper {
     fun mapDtoToWeather(weatherDto: WeatherDto): Weather {
         val currentWeather = weatherDto.currentWeather ?: throw NoWeatherFoundException()
         val weatherCode = currentWeather.weatherCode ?: throw NoWeatherFoundException()
-
         val hourlyWeather = weatherDto.hourlyWeather ?: throw NoWeatherFoundException()
         val hourlyTemperature = hourlyWeather.temperature2m ?: throw NoWeatherFoundException()
         val hourlyTime = hourlyWeather.time ?: throw NoWeatherFoundException()
+        val hourlyWeatherCode = hourlyWeather.weatherCode ?: throw NoWeatherFoundException()
 
         val dailyWeather = weatherDto.dailyWeather ?: throw NoWeatherFoundException()
         val time = dailyWeather.time ?: throw NoWeatherFoundException()
@@ -33,23 +33,30 @@ class WeatherMapper {
 
         val currentData = CurrentWeatherData(
             temperature = currentWeather.temperature2m?.roundToInt() ?: 0,
-            apparentTemperature = currentWeather.apparentTemperature?.roundToInt() ?: 0,
+            feelsLike = currentWeather.apparentTemperature?.roundToInt() ?: 0,
             windSpeed = currentWeather.windSpeed10m?.roundToInt() ?: 0,
             humidity = currentWeather.relativeHumidity2m ?: 0,
             uvIndex = currentWeather.uvIndex?.roundToInt() ?: 0,
             pressure = currentWeather.surfacePressure?.roundToInt() ?: 0,
-            weatherCondition = getWeatherForeCast(weatherCode)
+            weatherCondition = getWeatherForeCast(weatherCode),
+            isDay = currentWeather.isDay?.equals(1)?:true,
+            rain = currentWeather.precipitationProbability?.roundToInt() ?: 0
+            //weatherImage = getWeatherImage(weatherCode),
+            //weatherDescription = getWeatherDescription(weatherCode)
+
         )
 
-        val hourlyData = hourlyTemperature.zip(hourlyTime) { temp, times ->
-            HourlyTemperature(
-                temperature = temp.roundToInt(),
-                hour = getHourFromTimeString(times)
+        val minSize = listOf(hourlyTemperature.size, hourlyTime.size, hourlyWeatherCode.size).minOrNull() ?: 0
+        val hourlyData = (0 until minSize).map { i ->
+            HourlyTemperatureData(
+                temperature = hourlyTemperature[i].roundToInt(),
+                hour = getHourFromTimeString(hourlyTime[i]),
+                weatherCondition = getWeatherForeCast(hourlyWeatherCode[i])
             )
         }.drop(1).take(24)
 
-        val dailyForecasts = time.indices.map { i ->
-            DailyForecast(
+        val dailyWeatherData = time.indices.map { i ->
+            DailyWeatherData(
                 date = LocalDate.parse(time[i]),
                 maxTemp = maxTemps[i].roundToInt(),
                 minTemp = minTemps[i].roundToInt(),
@@ -59,8 +66,8 @@ class WeatherMapper {
 
         return Weather(
             current = currentData,
-            hourlyTemperatures = hourlyData,
-            dailyForecasts = dailyForecasts
+            hourlyTemperatureData = hourlyData,
+            dailyWeatherData = dailyWeatherData
         )
     }
 
@@ -72,34 +79,34 @@ class WeatherMapper {
 
     private fun getWeatherForeCast(weatherCode: Int): WeatherCondition {
         return when (weatherCode) {
-            0 -> WeatherCondition.CLEAR_SKY
-            1 -> WeatherCondition.MAINLY_CLEAR
-            2 -> WeatherCondition.PARTLY_CLOUDY
-            3 -> WeatherCondition.OVERCAST
+            0 ->  WeatherCondition.CLEAR_SKY
+            1 ->  WeatherCondition.MAINLY_CLEAR
+            2 ->  WeatherCondition.PARTLY_CLOUDY
+            3 ->  WeatherCondition.OVERCAST
             45 -> WeatherCondition.FOG
             48 -> WeatherCondition.DEPOSITING_RIME_FOG
-            51 -> WeatherCondition.DRIZZLE_LIGHT
-            53 -> WeatherCondition.DRIZZLE_MODERATE
-            55 -> WeatherCondition.DRIZZLE_HIGH
-            56 -> WeatherCondition.FREEZING_DRIZZLE_LIGHT
-            57 -> WeatherCondition.FREEZING_DRIZZLE_HIGHT
-            61 -> WeatherCondition.RAIN_LIGHT
-            63 -> WeatherCondition.RAIN_MODERATE
-            65 -> WeatherCondition.RAIN_HEAVY
-            66 -> WeatherCondition.FREEZING_RAIN_LIGHT
-            67 -> WeatherCondition.FREEZING_RAIN_HIGH
-            73 -> WeatherCondition.SNOW_MODERATE
-            71 -> WeatherCondition.SNOW_LIGHT
-            75 -> WeatherCondition.SNOW_HEAVY
+            51 -> WeatherCondition.LIGHT_DRIZZLE
+            53 -> WeatherCondition.MODERATE_DRIZZLE
+            55 -> WeatherCondition.DENSE_DRIZZLE
+            56 -> WeatherCondition.LIGHT_FREEZING_DRIZZLE
+            57 -> WeatherCondition.DENSE_FREEZING_DRIZZLE
+            61 -> WeatherCondition.SLIGHT_RAIN
+            63 -> WeatherCondition.MODERATE_RAIN
+            65 -> WeatherCondition.HEAVY_RAIN
+            66 -> WeatherCondition.LIGHT_FREEZING_RAIN
+            67 -> WeatherCondition.HEAVY_FREEZING_RAIN
+            71 -> WeatherCondition.SLIGHT_SNOW_FALL
+            73 -> WeatherCondition.MODERATE_SNOW_FALL
+            75 -> WeatherCondition.HEAVY_SNOW_FALL
             77 -> WeatherCondition.SNOW_GRAINS
-            80 -> WeatherCondition.RAIN_SHOWER_LIGHT
-            81 -> WeatherCondition.RAIN_SHOWER_MODRATE
-            82 -> WeatherCondition.RAIN_SHOWER_HEAVY
-            85 -> WeatherCondition.SNOW_SHOWER_LIGHT
-            86 -> WeatherCondition.SNOW_SHOWER_HEAVY
-            95 -> WeatherCondition.THUNDER_STORM
-            96 -> WeatherCondition.THUNDER_STORM_HAIL_LIGHT
-            99 -> WeatherCondition.THUNDER_STORM_HAIL_HEAVY
+            80 -> WeatherCondition.SLIGHT_RAIN_SHOWERS
+            81 -> WeatherCondition.MODERATE_RAIN_SHOWERS
+            82 -> WeatherCondition.VIOLENT_RAIN_SHOWERS
+            85 -> WeatherCondition.SLIGHT_SNOW_SHOWERS
+            86 -> WeatherCondition.HEAVY_SNOW_SHOWERS
+            95 -> WeatherCondition.SLIGHT_OR_MODERATE_THUNDERSTORM
+            96 -> WeatherCondition.THUNDERSTORM_WITH_SLIGHT_HAIL
+            99 -> WeatherCondition.THUNDERSTORM_WITH_HEAVY_HAIL
             else -> WeatherCondition.UNKNOWN_WEATHER_FORECAST
         }
     }

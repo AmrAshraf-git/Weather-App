@@ -4,4 +4,5 @@ import com.ipro.weatherapp.domain.model.LocationCoordinate
 
 interface LocationRepo {
     suspend fun getCurrentLocation(): LocationCoordinate
+    suspend fun getCityNameFromLocation(location: LocationCoordinate): String
 }

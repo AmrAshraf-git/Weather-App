@@ -7,11 +7,11 @@ import com.ipro.weatherapp.domain.model.Weather
 import com.ipro.weatherapp.domain.repository.WeatherRepo
 
 class WeatherRepoImp(
-    private val remoteDataSource: WeatherRemoteDataSource,
+    private val weatherRemoteDataSource: WeatherRemoteDataSource,
     private val weatherMapper: WeatherMapper,
 ): WeatherRepo {
     override suspend fun getDailyWeatherByCoordinate(locationCoordinate: LocationCoordinate): Weather {
-        val res = remoteDataSource.getDailyWeatherByCoordinate(locationCoordinate)
+        val res = weatherRemoteDataSource.getDailyWeatherByCoordinate(locationCoordinate)
         return weatherMapper.mapDtoToWeather(res)
     }
 

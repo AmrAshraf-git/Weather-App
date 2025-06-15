@@ -32,4 +32,10 @@ data class CurrentWeather(
 
     @SerialName("surface_pressure")
     val surfacePressure: Double?,
+
+    @SerialName("is_day")
+    val isDay: Int?,
+
+    @SerialName("precipitation_probability")
+    val precipitationProbability: Double?,
 )
