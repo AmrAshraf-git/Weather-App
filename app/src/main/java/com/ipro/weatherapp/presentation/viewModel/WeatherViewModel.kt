@@ -10,7 +10,8 @@ import com.ipro.weatherapp.domain.usecase.GetWeatherByLocationUseCase
 import com.ipro.weatherapp.presentation.components.WeatherEvent
 import com.ipro.weatherapp.presentation.mapper.toTimeTheme
 import com.ipro.weatherapp.presentation.mapper.toUiModel
-import com.ipro.weatherapp.presentation.model.WeatherState
+import com.ipro.weatherapp.presentation.model.WeatherUi
+import com.ipro.weatherapp.presentation.model.WeatherUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -20,7 +21,7 @@ class WeatherViewModel(
     private val getWeatherByLocationUseCase: GetWeatherByLocationUseCase,
     private val getCityNameFromLocationUseCase: GetCityNameFromLocationUseCase
 ) : ViewModel() {
-    private val _state = MutableStateFlow(WeatherState())
+    private val _state = MutableStateFlow(WeatherUiState())
     val state = _state.asStateFlow()
 
     fun onEvent(event: WeatherEvent) {
@@ -41,12 +42,14 @@ class WeatherViewModel(
                 val cityName = getCityNameFromLocationUseCase(location)
                 val weather = getWeatherByLocationUseCase(location)
 
-                val timeTheme = weather.current.isDay.toTimeTheme()
+                val timeTheme = weather.currentWeatherData.isDay.toTimeTheme()
 
                 _state.value = state.value.copy(
-                    currentWeather = weather.current.toUiModel(),
-                    hourlyTemperatureData = weather.hourlyTemperatureData.map { it.toUiModel(timeTheme) },
-                    dailyWeatherData = weather.dailyWeatherData.map { it.toUiModel(timeTheme) },
+                    weather = WeatherUi(
+                        current = weather.currentWeatherData.toUiModel(),
+                        hourlyTemperatures = weather.hourlyWeatherData.map { it.toUiModel(timeTheme) },
+                        dailyForecasts = weather.dailyWeatherData.map { it.toUiModel(timeTheme) }
+                    ),
                     isLoading = false,
                     error = null,
                     cityName = cityName

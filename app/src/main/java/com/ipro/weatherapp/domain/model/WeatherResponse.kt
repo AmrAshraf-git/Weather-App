@@ -3,9 +3,8 @@ package com.ipro.weatherapp.domain.model
 import java.time.LocalDate
 
 data class Weather(
-    val hourlyTemperatureData: List<HourlyTemperatureData>,
-    //val weatherCondition: WeatherCondition,
-    val current: CurrentWeatherData,
+    val hourlyWeatherData: List<HourlyWeatherData>,
+    val currentWeatherData: CurrentWeatherData,
     val dailyWeatherData: List<DailyWeatherData>
 )
 
@@ -28,7 +27,7 @@ data class DailyWeatherData(
     val weatherCondition: WeatherCondition,
 )
 
-data class HourlyTemperatureData(
+data class HourlyWeatherData(
     val temperature: Int,
     val hour: Int,
     val weatherCondition: WeatherCondition,

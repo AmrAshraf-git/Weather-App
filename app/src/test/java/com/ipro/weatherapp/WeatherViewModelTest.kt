@@ -70,8 +70,8 @@ class WeatherViewModelTest {
 
         assertEquals(false, state.isLoading)
         assertNull(state.error)
-        assertEquals(expectedWeather.current, state.currentWeather)
-        assertEquals(expectedWeather.hourlyTemperatureData, state.hourlyTemperatureData)
+        assertEquals(expectedWeather.currentWeatherData, state.currentWeather)
+        assertEquals(expectedWeather.hourlyWeatherData, state.hourlyTemperatureData)
         assertEquals(expectedWeather.dailyWeatherData, state.dailyWeatherData)
         assertEquals(fakeCityName, state.cityName)
         assertTrue(state.currentWeather?.isDay?:false)
@@ -104,6 +104,6 @@ class WeatherViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.state.value
-        assertEquals(fakeWeather.current, state.currentWeather)
+        assertEquals(fakeWeather.currentWeatherData, state.currentWeather)
     }
 }

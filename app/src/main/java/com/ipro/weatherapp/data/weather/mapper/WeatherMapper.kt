@@ -1,60 +1,83 @@
 package com.ipro.weatherapp.data.weather.mapper
 
-import data.weather.model.WeatherDto
+import data.weather.model.WeatherResponse
 import com.ipro.weatherapp.domain.exception.NoWeatherFoundException
 import com.ipro.weatherapp.domain.model.CurrentWeatherData
 import com.ipro.weatherapp.domain.model.DailyWeatherData
-import com.ipro.weatherapp.domain.model.HourlyTemperatureData
+import com.ipro.weatherapp.domain.model.HourlyWeatherData
 import com.ipro.weatherapp.domain.model.Weather
-import com.ipro.weatherapp.domain.model.WeatherCondition
+import data.weather.model.CurrentWeatherDto
+import data.weather.model.DailyWeatherDto
+import data.weather.model.HourlyWeatherDto
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-class WeatherMapper {
-    fun mapDtoToWeather(weatherDto: WeatherDto): Weather {
-        val currentWeather = weatherDto.currentWeather ?: throw NoWeatherFoundException()
-        val weatherCode = currentWeather.weatherCode ?: throw NoWeatherFoundException()
-        val hourlyWeather = weatherDto.hourlyWeather ?: throw NoWeatherFoundException()
-        val hourlyTemperature = hourlyWeather.temperature2m ?: throw NoWeatherFoundException()
-        val hourlyTime = hourlyWeather.time ?: throw NoWeatherFoundException()
-        val hourlyWeatherCode = hourlyWeather.weatherCode ?: throw NoWeatherFoundException()
+object WeatherMapper {
+    fun mapDtoToWeather(weatherResponse: WeatherResponse): Weather {
+        val currentWeather = weatherResponse.currentWeatherDto ?: throw NoWeatherFoundException()
+        val hourlyWeather = weatherResponse.hourlyWeatherDto ?: throw NoWeatherFoundException()
+        val dailyWeather = weatherResponse.dailyWeatherDto ?: throw NoWeatherFoundException()
 
-        val dailyWeather = weatherDto.dailyWeather ?: throw NoWeatherFoundException()
-        val time = dailyWeather.time ?: throw NoWeatherFoundException()
-        val maxTemps = dailyWeather.temperature2mMax ?: throw NoWeatherFoundException()
-        val minTemps = dailyWeather.temperature2mMin ?: throw NoWeatherFoundException()
-        val codes = dailyWeather.weatherCode ?: throw NoWeatherFoundException()
+        val currentData = toCurrentWeatherData(currentWeather)
+        val hourlyData = toHourlyWeatherData(hourlyWeather)
+        val dailyData = toDailyWeatherData(dailyWeather)
 
-        if (time.size != maxTemps.size || time.size != minTemps.size || time.size != codes.size) {
-            throw NoWeatherFoundException()
-        }
+        return Weather(
+            currentWeatherData = currentData,
+            hourlyWeatherData = hourlyData,
+            dailyWeatherData = dailyData
+        )
+    }
 
-        val currentData = CurrentWeatherData(
-            temperature = currentWeather.temperature2m?.roundToInt() ?: 0,
-            feelsLike = currentWeather.apparentTemperature?.roundToInt() ?: 0,
-            windSpeed = currentWeather.windSpeed10m?.roundToInt() ?: 0,
-            humidity = currentWeather.relativeHumidity2m ?: 0,
-            uvIndex = currentWeather.uvIndex?.roundToInt() ?: 0,
-            pressure = currentWeather.surfacePressure?.roundToInt() ?: 0,
-            weatherCondition = getWeatherForeCast(weatherCode),
-            isDay = currentWeather.isDay?.equals(1)?:true,
-            rain = currentWeather.precipitationProbability?.roundToInt() ?: 0
+
+    private fun toCurrentWeatherData(currentWeatherDto: CurrentWeatherDto): CurrentWeatherData {
+        return CurrentWeatherData(
+            temperature = currentWeatherDto.temperature2m?.roundToInt() ?: 0,
+            feelsLike = currentWeatherDto.apparentTemperature?.roundToInt() ?: 0,
+            windSpeed = currentWeatherDto.windSpeed10m?.roundToInt() ?: 0,
+            humidity = currentWeatherDto.relativeHumidity2m ?: 0,
+            uvIndex = currentWeatherDto.uvIndex?.roundToInt() ?: 0,
+            pressure = currentWeatherDto.surfacePressure?.roundToInt() ?: 0,
+            weatherCondition = getWeatherForeCast(currentWeatherDto.weatherCode ?: 0),
+            isDay = currentWeatherDto.isDay?.equals(1) ?: true,
+            rain = currentWeatherDto.precipitationProbability?.roundToInt() ?: 0
             //weatherImage = getWeatherImage(weatherCode),
             //weatherDescription = getWeatherDescription(weatherCode)
-
         )
+    }
 
-        val minSize = listOf(hourlyTemperature.size, hourlyTime.size, hourlyWeatherCode.size).minOrNull() ?: 0
+    private fun toHourlyWeatherData(hourlyWeatherDto: HourlyWeatherDto) : List<HourlyWeatherData> {
+
+        val hourlyTemperature = hourlyWeatherDto.temperature2m ?: throw NoWeatherFoundException()
+        val hourlyTime = hourlyWeatherDto.time ?: throw NoWeatherFoundException()
+        val hourlyWeatherCode = hourlyWeatherDto.weatherCode ?: throw NoWeatherFoundException()
+        if (hourlyTemperature.size != hourlyTime.size || hourlyTemperature.size != hourlyWeatherCode.size) {
+            throw NoWeatherFoundException()
+        }
+        val minSize = listOf(hourlyTemperature.size, hourlyTime.size, hourlyWeatherCode.size)
+            .minOrNull() ?: 0
+
         val hourlyData = (0 until minSize).map { i ->
-            HourlyTemperatureData(
-                temperature = hourlyTemperature[i].roundToInt(),
+            HourlyWeatherData(
+                temperature = hourlyWeatherDto.temperature2m[i].roundToInt(),
                 hour = getHourFromTimeString(hourlyTime[i]),
                 weatherCondition = getWeatherForeCast(hourlyWeatherCode[i])
             )
         }.drop(1).take(24)
 
+        return hourlyData
+    }
+
+    private fun toDailyWeatherData(dailyWeatherDto: DailyWeatherDto): List<DailyWeatherData> {
+        val time = dailyWeatherDto.time ?: throw NoWeatherFoundException()
+        if (time.size != dailyWeatherDto.temperature2mMax?.size ||
+            time.size != dailyWeatherDto.temperature2mMin?.size ||
+            time.size != dailyWeatherDto.weatherCode?.size
+        ) { throw NoWeatherFoundException() }
+
+        val maxTemps = dailyWeatherDto.temperature2mMax
+        val minTemps = dailyWeatherDto.temperature2mMin
+        val codes = dailyWeatherDto.weatherCode
         val dailyWeatherData = time.indices.map { i ->
             DailyWeatherData(
                 date = LocalDate.parse(time[i]),
@@ -64,50 +87,7 @@ class WeatherMapper {
             )
         }.take(7)
 
-        return Weather(
-            current = currentData,
-            hourlyTemperatureData = hourlyData,
-            dailyWeatherData = dailyWeatherData
-        )
+        return dailyWeatherData
     }
 
-    private fun getHourFromTimeString(time: String): Int {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
-        val dateTime = LocalDateTime.parse(time, formatter)
-        return dateTime.hour
-    }
-
-    private fun getWeatherForeCast(weatherCode: Int): WeatherCondition {
-        return when (weatherCode) {
-            0 ->  WeatherCondition.CLEAR_SKY
-            1 ->  WeatherCondition.MAINLY_CLEAR
-            2 ->  WeatherCondition.PARTLY_CLOUDY
-            3 ->  WeatherCondition.OVERCAST
-            45 -> WeatherCondition.FOG
-            48 -> WeatherCondition.DEPOSITING_RIME_FOG
-            51 -> WeatherCondition.LIGHT_DRIZZLE
-            53 -> WeatherCondition.MODERATE_DRIZZLE
-            55 -> WeatherCondition.DENSE_DRIZZLE
-            56 -> WeatherCondition.LIGHT_FREEZING_DRIZZLE
-            57 -> WeatherCondition.DENSE_FREEZING_DRIZZLE
-            61 -> WeatherCondition.SLIGHT_RAIN
-            63 -> WeatherCondition.MODERATE_RAIN
-            65 -> WeatherCondition.HEAVY_RAIN
-            66 -> WeatherCondition.LIGHT_FREEZING_RAIN
-            67 -> WeatherCondition.HEAVY_FREEZING_RAIN
-            71 -> WeatherCondition.SLIGHT_SNOW_FALL
-            73 -> WeatherCondition.MODERATE_SNOW_FALL
-            75 -> WeatherCondition.HEAVY_SNOW_FALL
-            77 -> WeatherCondition.SNOW_GRAINS
-            80 -> WeatherCondition.SLIGHT_RAIN_SHOWERS
-            81 -> WeatherCondition.MODERATE_RAIN_SHOWERS
-            82 -> WeatherCondition.VIOLENT_RAIN_SHOWERS
-            85 -> WeatherCondition.SLIGHT_SNOW_SHOWERS
-            86 -> WeatherCondition.HEAVY_SNOW_SHOWERS
-            95 -> WeatherCondition.SLIGHT_OR_MODERATE_THUNDERSTORM
-            96 -> WeatherCondition.THUNDERSTORM_WITH_SLIGHT_HAIL
-            99 -> WeatherCondition.THUNDERSTORM_WITH_HEAVY_HAIL
-            else -> WeatherCondition.UNKNOWN_WEATHER_FORECAST
-        }
-    }
 }

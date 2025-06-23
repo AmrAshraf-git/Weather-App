@@ -32,7 +32,7 @@ val dataModule = module {
         )
     }
 
-    single { WeatherMapper() }
+    single { WeatherMapper }
 
     single<WeatherRemoteDataSource> {
         WeatherRemoteDataSourceImp(client = get(), json = get())

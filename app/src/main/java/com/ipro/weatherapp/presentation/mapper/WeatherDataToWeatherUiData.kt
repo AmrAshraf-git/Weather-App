@@ -2,7 +2,7 @@ package com.ipro.weatherapp.presentation.mapper
 
 import com.ipro.weatherapp.domain.model.CurrentWeatherData
 import com.ipro.weatherapp.domain.model.DailyWeatherData
-import com.ipro.weatherapp.domain.model.HourlyTemperatureData
+import com.ipro.weatherapp.domain.model.HourlyWeatherData
 import com.ipro.weatherapp.presentation.model.CurrentWeatherUiData
 import com.ipro.weatherapp.presentation.model.DailyWeatherUiData
 import com.ipro.weatherapp.presentation.model.HourlyTemperatureUiData
@@ -34,7 +34,7 @@ fun DailyWeatherData.toUiModel(timeTheme: TimeTheme): DailyWeatherUiData {
     )
 }
 
-fun HourlyTemperatureData.toUiModel(timeTheme: TimeTheme): HourlyTemperatureUiData {
+fun HourlyWeatherData.toUiModel(timeTheme: TimeTheme): HourlyTemperatureUiData {
     return HourlyTemperatureUiData(
         temperature = this.temperature,
         hour = this.hour,

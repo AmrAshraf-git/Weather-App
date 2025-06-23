@@ -6,7 +6,6 @@ import com.ipro.weatherapp.presentation.model.TimeTheme
 import com.ipro.weatherapp.presentation.util.UiImage
 import com.ipro.weatherapp.presentation.util.UiText
 
-
 fun WeatherCondition.getWeatherImage(timeTheme: TimeTheme): UiImage {
     return if (timeTheme == TimeTheme.DAY) {
         UiImage.Drawable(

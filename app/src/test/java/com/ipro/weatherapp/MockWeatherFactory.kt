@@ -4,8 +4,8 @@ import java.time.LocalDate
 object MockWeatherFactory {
     fun mockWeather(): Weather {
         return Weather(
-            hourlyTemperatureData = mockHourlyTemperatures(),
-            current = mockCurrentWeatherData(),
+            hourlyWeatherData = mockHourlyTemperatures(),
+            currentWeatherData = mockCurrentWeatherData(),
             dailyWeatherData = mockDailyForecasts()
         )
     }
@@ -46,9 +46,9 @@ object MockWeatherFactory {
         )
     }
 
-    private fun mockHourlyTemperatures(): List<HourlyTemperatureData> {
+    private fun mockHourlyTemperatures(): List<HourlyWeatherData> {
         return (0..23).map { hour ->
-            HourlyTemperatureData(
+            HourlyWeatherData(
                 hour = hour,
                 temperature = 15 + hour % 5 // predictable values
             )
