@@ -30,7 +30,7 @@ class WeatherRemoteDataSourceImp (private val client: HttpClient, private val js
     companion object{
         private const val BASE_WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 
-        private const val HOURLY_TAGS = "temperature_2m,weather_code"
+        private const val HOURLY_TAGS = "temperature_2m,weather_code,is_day"
         private const val DAILY_TAGS = "temperature_2m_max,temperature_2m_min,weather_code"
         private const val CURRENT_TAGS =
             "temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,precipitation_probability,uv_index,surface_pressure,apparent_temperature,is_day"
