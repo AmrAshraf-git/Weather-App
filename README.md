@@ -56,8 +56,7 @@ Weather App is a modern Android weather application built using Jetpack Compose,
    - Utilize Koin for all dependency injection needs.
    
    
-   
 ## Author
 Amr Ashraf
 Android Developer
-LinkedIn | GitHub
+[LinkedIn](http://www.linkedin.com/in/AmrAshraf-in)
